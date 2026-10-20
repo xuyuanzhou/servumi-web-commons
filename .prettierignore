@@ -1,0 +1,13 @@
+# 生成物与依赖目录
+node_modules
+dist
+coverage
+
+# 编辑器本地历史副本
+.history
+
+# 锁文件由 npm 维护，格式化会与 npm 的写入结果互相打架
+package-lock.json
+
+# 说明文档不纳入代码风格门禁
+*.md

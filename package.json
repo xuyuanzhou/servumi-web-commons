@@ -1,0 +1,36 @@
+{
+  "name": "servumi-js-api",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Servumi 前端 API 对接底座：响应信封、错误类型、带静默刷新的请求客户端、错误文案工厂，以及 Remote 与 Shell 之间的运行时契约。",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "types": "./src/index.ts",
+  "module": "./src/index.ts",
+  "sideEffects": false,
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc -b",
+    "lint": "eslint . --max-warnings=0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.13.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.10",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "^8.72.0",
+    "vitest": "^5.0.5"
+  }
+}

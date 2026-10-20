@@ -1,0 +1,11 @@
+node_modules/
+dist/
+coverage/
+.tmp/
+.vite/
+.history/
+.DS_Store
+*.local
+.env
+.env.*
+!.env.example
