@@ -1,4 +1,4 @@
-# servumi-js-api
+# servumi-web-commons
 
 Servumi 前端的 **API 对接底座**：把壳（`servumi-web`）与各业务 Remote 之间逐字节重复的那几份
 `contract.ts` / `request.ts` / `format-error.ts` 收成唯一一份。
@@ -30,7 +30,7 @@ Servumi 前端的 **API 对接底座**：把壳（`servumi-web`）与各业务 R
 ```json
 {
   "dependencies": {
-    "servumi-js-api": "file:../servumi-js-api"
+    "servumi-web-commons": "file:../servumi-web-commons"
   }
 }
 ```
