@@ -4,7 +4,7 @@ import { createFormatError, errorCode, errorStatus } from './format-error'
 
 const formatError = createFormatError('personal-notes')
 
-const t: Translator = (key, values) => {
+const formatMessage: Translator = (key, values) => {
   const messages: Record<string, string> = {
     'personal-notes.error.RESOURCE_CONFLICT': '这条笔记已在别处改过',
     'personal-notes.error.detail': '[{code}] {message}',
@@ -19,28 +19,30 @@ const t: Translator = (key, values) => {
 
 describe('createFormatError', () => {
   it('目录有该码时用它，不暴露服务端原始 message', () => {
-    expect(formatError({ status: 409, code: 'RESOURCE_CONFLICT', message: 'raw', requestId: 'r1' }, t)).toBe(
-      '[RESOURCE_CONFLICT] 这条笔记已在别处改过',
-    )
+    expect(
+      formatError({ status: 409, code: 'RESOURCE_CONFLICT', message: 'raw', requestId: 'r1' }, formatMessage),
+    ).toBe('[RESOURCE_CONFLICT] 这条笔记已在别处改过')
   })
 
   it('目录缺该码时回退服务端 message', () => {
-    expect(formatError({ status: 400, code: 'BAD_INPUT', message: '参数不对', requestId: 'r2' }, t)).toBe(
+    expect(formatError({ status: 400, code: 'BAD_INPUT', message: '参数不对', requestId: 'r2' }, formatMessage)).toBe(
       '[BAD_INPUT] 参数不对',
     )
   })
 
   it('缺该码且服务端没给 message 时回退错误码本身', () => {
-    expect(formatError({ status: 400, code: 'BAD_INPUT', requestId: 'r3' }, t)).toBe('[BAD_INPUT] BAD_INPUT')
+    expect(formatError({ status: 400, code: 'BAD_INPUT', requestId: 'r3' }, formatMessage)).toBe(
+      '[BAD_INPUT] BAD_INPUT',
+    )
   })
 
   it('普通 Error 直接取其 message', () => {
-    expect(formatError(new Error('网络断了'), t)).toBe('网络断了')
+    expect(formatError(new Error('网络断了'), formatMessage)).toBe('网络断了')
   })
 
   it('message 为空的 Error 与未知类型都回退未知文案', () => {
-    expect(formatError(new Error(''), t)).toBe('出错了')
-    expect(formatError('boom', t)).toBe('出错了')
+    expect(formatError(new Error(''), formatMessage)).toBe('出错了')
+    expect(formatError('boom', formatMessage)).toBe('出错了')
   })
 })
 

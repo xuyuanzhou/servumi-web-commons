@@ -9,6 +9,29 @@ export type RequestOptions = {
   auth?: boolean
   /** 默认在 401 时先试一次静默刷新再重放；重放自身必须传 false，否则会自激。 */
   retry?: boolean
+  /** 调用方取消信号（如取数 effect 卸载）；与超时信号取并集，任一触发即中断。 */
+  signal?: AbortSignal
+  /** 单次请求超时毫秒数；默认 15000，传 0 关闭。 */
+  timeout?: number
+}
+
+/** 默认超时：对端不响应时不能让请求和界面一起无限期挂住。 */
+const DEFAULT_TIMEOUT_MS = 15_000
+
+/**
+ * 超时信号与调用方信号取并集：两者都触发中断，但中断原因保留原样，
+ * 调用方自己的 abort 不会被当成「超时」，页面才能区分「我主动取消」与「对端太慢」。
+ */
+function timeoutSignal(timeout: number): AbortSignal | undefined {
+  return timeout > 0 ? AbortSignal.timeout(timeout) : undefined
+}
+
+function combineSignals(signal: AbortSignal | undefined, timeout: number): AbortSignal | undefined {
+  const limit = timeoutSignal(timeout)
+  if (!signal) {
+    return limit
+  }
+  return limit ? AbortSignal.any([signal, limit]) : signal
 }
 
 export type RefreshResult = {
@@ -82,6 +105,7 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
           method: 'POST',
           headers: acceptLanguage ? { 'Accept-Language': acceptLanguage } : undefined,
           credentials: 'include',
+          signal: timeoutSignal(DEFAULT_TIMEOUT_MS),
         })
         if (epoch !== sessionEpoch) {
           return { ok: false, unavailable: false }
@@ -131,6 +155,7 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
       headers,
       credentials: 'include',
       body: requestOptions.body === undefined ? undefined : JSON.stringify(requestOptions.body),
+      signal: combineSignals(requestOptions.signal, requestOptions.timeout ?? DEFAULT_TIMEOUT_MS),
     })
 
     if (response.status === 401 && requestOptions.auth !== false && requestOptions.retry !== false) {

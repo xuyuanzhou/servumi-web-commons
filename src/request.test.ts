@@ -232,3 +232,34 @@ describe('createApiClient 静默刷新', () => {
     expect(client.getAccessToken()).toBeNull()
   })
 })
+
+/** 桩：只在 signal 中止时拒绝，用来证明中断确实落到了 fetch 上。 */
+function stallingFetch(): ReturnType<typeof vi.fn> {
+  return vi.fn(
+    async (_input: string, init?: RequestInit) =>
+      new Promise<Response>((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => reject(init.signal?.reason))
+      }),
+  )
+}
+
+describe('createApiClient 中断', () => {
+  it('超过 timeout 即中止请求，中断原因是超时', async () => {
+    vi.stubGlobal('fetch', stallingFetch())
+
+    const client = createApiClient()
+    await expect(client.request('/api/slow', { timeout: 5 })).rejects.toMatchObject({ name: 'TimeoutError' })
+  })
+
+  it('调用方 signal 中止时立刻结束，不等到超时', async () => {
+    vi.stubGlobal('fetch', stallingFetch())
+
+    const client = createApiClient()
+    const controller = new AbortController()
+    // 超时给足 10s：若用例在毫秒级就返回，说明确实是调用方的 signal 生效。
+    const pending = client.request('/api/slow', { signal: controller.signal, timeout: 10_000 })
+    controller.abort()
+
+    await expect(pending).rejects.toMatchObject({ name: 'AbortError' })
+  })
+})

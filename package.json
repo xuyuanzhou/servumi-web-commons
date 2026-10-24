@@ -1,9 +1,9 @@
 {
   "name": "servumi-web-commons",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.1",
   "type": "module",
-  "description": "Servumi 前端 API 对接底座：响应信封、错误类型、带静默刷新的请求客户端、错误文案工厂，以及 Remote 与 Shell 之间的运行时契约。",
+  "description": "Servumi 前端共享底座：响应信封、错误类型、带静默刷新的请求客户端、错误文案工厂、多语言取值，以及 Remote 与 Shell 之间的运行时契约与模块标准页面骨架。",
   "exports": {
     ".": {
       "types": "./src/index.ts",
@@ -23,12 +23,23 @@
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
+  "peerDependencies": {
+    "antd": "^6.6.6",
+    "react": "^19.2.0",
+    "react-router-dom": "^7.9.4"
+  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "antd": "^6.6.6",
     "eslint": "^10.13.0",
     "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.13.0",
     "prettier": "^3.9.10",
+    "react": "^19.2.0",
+    "react-router-dom": "^7.9.4",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.72.0",
     "vitest": "^5.0.5"

@@ -41,21 +41,24 @@ export function errorStatus(error: unknown): number | null {
 /**
  * 造一个用本模块语言目录取句的错误文案函数。
  *
- * 键前缀必须由调用方传入（如 `learn-lesson`）：目录键是模块私有的，公共包猜不出来。
+ * `keyPrefix` 是传进来的 `formatMessage` 背后目录已经带的键前缀：壳取自己的目录时传 `shell`；
+ * 模块拿到的是壳按模块 id 限定过作用域的 `formatMessage`，键本身就是模块内相对键，不传前缀即可。
  * 目录缺该码时回退服务端 message，两条路径都不把原始 message 当成已翻译文案吞掉。
  */
-export function createFormatError(keyPrefix: string): (error: unknown, t: Translator) => string {
-  return (error, t) => {
+export function createFormatError(keyPrefix = ''): (error: unknown, formatMessage: Translator) => string {
+  const at = (suffix: string) => (keyPrefix === '' ? suffix : `${keyPrefix}.${suffix}`)
+
+  return (error, formatMessage) => {
     const apiError = asApiError(error)
     if (apiError) {
-      const key = `${keyPrefix}.error.${apiError.code}`
-      const known = t(key)
-      const message = known === key ? apiError.message || apiError.code : known
-      return t(`${keyPrefix}.error.detail`, { message, code: apiError.code, requestId: apiError.requestId })
+      const codeKey = at(`error.${apiError.code}`)
+      const known = formatMessage(codeKey)
+      const message = known === codeKey ? apiError.message || apiError.code : known
+      return formatMessage(at('error.detail'), { message, code: apiError.code, requestId: apiError.requestId })
     }
     if (error instanceof Error) {
-      return error.message || t(`${keyPrefix}.error.unknown`)
+      return error.message || formatMessage(at('error.unknown'))
     }
-    return t(`${keyPrefix}.error.unknown`)
+    return formatMessage(at('error.unknown'))
   }
 }
