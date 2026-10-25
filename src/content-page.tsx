@@ -3,6 +3,7 @@ import type { CSSProperties, ReactNode } from 'react'
 
 export type StandardContentPageProps = {
   className?: string
+  breadcrumb?: ReactNode
   title: ReactNode
   summary?: ReactNode
   extra?: ReactNode
@@ -14,8 +15,19 @@ export type StandardContentPageProps = {
  *
  * 这层故意很薄，只收「页头长什么样」这件公共事实，不替模块决定表单、列表或 Tabs 的结构。
  * 这样既能借鉴行业里“布局与内容解耦”的做法，又不把页面写成另一套 schema 运行时。
+ *
+ * `breadcrumb` 是管理页才需要的槽位（「管理台 / 权限管理」这类位置提示）：业务模块页通常不传，
+ * 管理页传一段 `Breadcrumb`。收在这里而不是另立一个「管理页头」组件，是因为页头只有一份事实，
+ * 两个变体并存会让同一套骨架长成两副样子。
  */
-export function StandardContentPage({ className, title, summary, extra, children }: StandardContentPageProps) {
+export function StandardContentPage({
+  className,
+  breadcrumb,
+  title,
+  summary,
+  extra,
+  children,
+}: StandardContentPageProps) {
   const { token } = theme.useToken()
 
   const rootStyle: CSSProperties = {
@@ -36,6 +48,10 @@ export function StandardContentPage({ className, title, summary, extra, children
     minWidth: 0,
     maxWidth: 880,
   }
+  const breadcrumbStyle: CSSProperties = {
+    marginBlockEnd: token.marginXS,
+    minWidth: 0,
+  }
   const extraStyle: CSSProperties = {
     flex: '0 0 auto',
     maxWidth: '100%',
@@ -45,6 +61,7 @@ export function StandardContentPage({ className, title, summary, extra, children
     <div className={className} style={rootStyle}>
       <div style={headerStyle}>
         <div style={titleWrapStyle}>
+          {breadcrumb === undefined ? null : <div style={breadcrumbStyle}>{breadcrumb}</div>}
           <Typography.Title level={4} style={{ marginBlockEnd: summary === undefined ? 0 : token.marginXXS }}>
             {title}
           </Typography.Title>
