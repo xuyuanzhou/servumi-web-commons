@@ -238,5 +238,5 @@ export const LOGIN_ROUTE = '/login'
  * 壳的一级路由常量：页面在越权/异常时需要退回管理首页，而这些路径由壳决定。
  * 壳改了这几条路径，这里必须同改——跨仓共享的就是这份常量。
  */
-export const ADMIN_ROUTE = '/admin'
-export const MOBILE_ADMIN_ROUTE = '/mobile/admin'
+export const ADMIN_ROUTE = '/manage'
+export const MOBILE_ADMIN_ROUTE = '/mobile/manage'

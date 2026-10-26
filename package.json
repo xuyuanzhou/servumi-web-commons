@@ -1,7 +1,7 @@
 {
   "name": "servumi-web-commons",
   "private": true,
-  "version": "0.2.1",
+  "version": "0.2.2",
   "type": "module",
   "description": "Servumi 前端共享底座：响应信封、错误类型、带静默刷新的请求客户端、错误文案工厂、多语言取值，以及 Remote 与 Shell 之间的运行时契约与模块标准页面骨架。",
   "exports": {
