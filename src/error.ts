@@ -9,13 +9,13 @@ import type { ApiEnvelope } from './envelope'
 export class ApiError extends Error {
   readonly status: number
   readonly code: string
-  readonly requestId: string
+  readonly traceId: string
 
   constructor(status: number, envelope: ApiEnvelope) {
-    super(envelope.message || envelope.code)
+    super(envelope.msg || envelope.code)
     this.name = 'ApiError'
     this.status = status
     this.code = envelope.code
-    this.requestId = envelope.requestId
+    this.traceId = envelope.traceId
   }
 }

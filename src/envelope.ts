@@ -9,9 +9,9 @@
 export type ApiEnvelope<T = unknown> = {
   success: boolean
   code: string
-  message: string
+  msg: string
   data: T
-  requestId: string
+  traceId: string
 }
 
 /** 解析并校验一份信封；形状不符直接抛错。 */

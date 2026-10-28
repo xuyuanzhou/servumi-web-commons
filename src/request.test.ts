@@ -6,11 +6,11 @@ function envelope(body: Record<string, unknown>, status = 200): Response {
 }
 
 function ok(body: Record<string, unknown> = {}): Record<string, unknown> {
-  return { success: true, code: 'OK', message: '', data: body, requestId: 'r-ok' }
+  return { success: true, code: 'OK', msg: '', data: body, traceId: 'r-ok' }
 }
 
-function failed(code: string, message = '', status = 400): Response {
-  return envelope({ success: false, code, message, data: null, requestId: 'r-fail' }, status)
+function failed(code: string, msg = '', status = 400): Response {
+  return envelope({ success: false, code, msg, data: null, traceId: 'r-fail' }, status)
 }
 
 /** 从调用参数里取请求路径；用例只关心路径，不关心具体 fetch 实现。 */
@@ -45,7 +45,7 @@ describe('createApiClient 请求口径', () => {
       name: 'ApiError',
       status: 404,
       code: 'RESOURCE_NOT_FOUND',
-      requestId: 'r-fail',
+      traceId: 'r-fail',
     })
   })
 

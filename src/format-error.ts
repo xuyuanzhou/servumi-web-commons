@@ -1,6 +1,6 @@
 import type { Translator } from './contract'
 
-type ApiErrorLike = { status: number; code: string; message: string; requestId: string }
+type ApiErrorLike = { status: number; code: string; msg: string; traceId: string }
 
 function asApiError(error: unknown): ApiErrorLike | null {
   if (typeof error !== 'object' || error === null) {
@@ -13,8 +13,8 @@ function asApiError(error: unknown): ApiErrorLike | null {
   return {
     status: candidate.status,
     code: candidate.code,
-    message: typeof candidate.message === 'string' ? candidate.message : '',
-    requestId: typeof candidate.requestId === 'string' ? candidate.requestId : '',
+    msg: typeof candidate.msg === 'string' ? candidate.msg : '',
+    traceId: typeof candidate.traceId === 'string' ? candidate.traceId : '',
   }
 }
 
@@ -53,8 +53,8 @@ export function createFormatError(keyPrefix = ''): (error: unknown, formatMessag
     if (apiError) {
       const codeKey = at(`error.${apiError.code}`)
       const known = formatMessage(codeKey)
-      const message = known === codeKey ? apiError.message || apiError.code : known
-      return formatMessage(at('error.detail'), { message, code: apiError.code, requestId: apiError.requestId })
+      const msg = known === codeKey ? apiError.msg || apiError.code : known
+      return formatMessage(at('error.detail'), { msg, code: apiError.code, traceId: apiError.traceId })
     }
     if (error instanceof Error) {
       return error.message || formatMessage(at('error.unknown'))
