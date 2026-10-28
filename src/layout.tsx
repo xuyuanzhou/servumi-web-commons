@@ -183,19 +183,25 @@ function ModuleNav({ menu, navLabel, active, ...page }: ModuleNavProps) {
   const items = toMenuItems(menu, page.formatMessage)
   const label = navLabel === undefined ? undefined : page.formatMessage(navLabel)
 
-  // 左侧导航栏：标题 + 竖直分隔线。用一条细线把导航与正文分开，比整块底色更贴合壳的白底面板。
+  /*
+   * 左侧导航栏：标题 + 竖直分隔线。用一条细线把导航与正文分开，比整块底色更贴合壳的白底面板。
+   *
+   * 栏宽、底色、描边、内边距与标题字号都留了 CSS 变量口子，变量没被设时走这里的中性默认值；
+   * 装配方（如学习门户）据此把这一栏收成自己那一套视觉语言，而模块独立运行时不必知道是谁在装它。
+   */
   const railStyle: CSSProperties = {
     flex: '0 0 auto',
-    width: 216,
-    borderInlineEnd: `1px solid ${token.colorSplit}`,
-    paddingInlineEnd: token.padding,
+    width: 'var(--servumi-module-rail-width, 216px)',
+    background: 'var(--servumi-module-rail-bg, transparent)',
+    borderInlineEnd: `1px solid var(--servumi-module-rail-line, ${token.colorSplit})`,
+    paddingInline: `var(--servumi-module-rail-pad, 0 ${token.padding}px)`,
   }
   const titleStyle: CSSProperties = {
     marginBlockEnd: token.marginXS,
     paddingInline: token.paddingSM,
-    fontSize: token.fontSizeLG,
+    fontSize: `var(--servumi-module-rail-title-size, ${token.fontSizeLG}px)`,
     fontWeight: 600,
-    color: token.colorTextHeading,
+    color: `var(--servumi-module-rail-title-color, ${token.colorTextHeading})`,
     lineHeight: `${token.controlHeight}px`,
     whiteSpace: 'nowrap',
     overflow: 'hidden',
@@ -204,8 +210,12 @@ function ModuleNav({ menu, navLabel, active, ...page }: ModuleNavProps) {
 
   return (
     <div style={{ display: 'flex', alignItems: 'stretch', gap: token.paddingLG }}>
-      <nav aria-label={label} style={railStyle}>
-        {label === undefined ? null : <div style={titleStyle}>{label}</div>}
+      <nav aria-label={label} className="servumi-module-rail" style={railStyle}>
+        {label === undefined ? null : (
+          <div className="servumi-module-rail-title" style={titleStyle}>
+            {label}
+          </div>
+        )}
         <Menu
           mode="inline"
           items={items}
