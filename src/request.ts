@@ -1,5 +1,5 @@
 import type { ShellRequest } from './contract'
-import { parseEnvelope, type ApiEnvelope } from './envelope'
+import { parseEnvelope, type Response } from './envelope'
 import { ApiError } from './error'
 
 export type RequestOptions = {
@@ -138,7 +138,7 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
     return refreshInFlight
   }
 
-  async function request<T = unknown>(path: string, requestOptions: RequestOptions = {}): Promise<ApiEnvelope<T>> {
+  async function request<T = unknown>(path: string, requestOptions: RequestOptions = {}): Promise<Response<T>> {
     const headers: Record<string, string> = { Accept: 'application/json' }
     if (acceptLanguage) {
       headers['Accept-Language'] = acceptLanguage
@@ -169,7 +169,7 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
     if (!response.ok || !envelope.success) {
       throw new ApiError(response.status, envelope)
     }
-    return envelope as ApiEnvelope<T>
+    return envelope as Response<T>
   }
 
   return { request, refresh: refreshOnce, getAccessToken, setAccessToken, clearAccessToken, setAcceptLanguage }

@@ -1,4 +1,4 @@
-import type { ApiEnvelope } from './envelope'
+import type { Response } from './envelope'
 
 /**
  * 接口错误：非 2xx 或 `success === false` 时的统一抛出物。
@@ -11,7 +11,7 @@ export class ApiError extends Error {
   readonly code: string
   readonly traceId: string
 
-  constructor(status: number, envelope: ApiEnvelope) {
+  constructor(status: number, envelope: Response) {
     super(envelope.msg || envelope.code)
     this.name = 'ApiError'
     this.status = status

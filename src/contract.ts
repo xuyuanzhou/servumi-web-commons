@@ -8,7 +8,7 @@
  * 契约变更必须同步 `docs/frontend-architecture.md` 与 ADR-0007，不得只改一边。
  */
 import { COMMONS_VERSION, contractDrift, readHostContract } from './contract-version'
-import type { ApiEnvelope } from './envelope'
+import type { Response } from './envelope'
 import { flattenLocaleMessages, type NestedMessages } from './locale'
 
 /** 壳注入的会话摘要；匿名时为 null。只给标识，不含令牌与权限集合。 */
@@ -226,7 +226,7 @@ function warnOnContractDrift(): void {
 export type ShellRequest = <T = unknown>(
   path: string,
   options?: { method?: string; body?: unknown; auth?: boolean; signal?: AbortSignal; timeout?: number },
-) => Promise<ApiEnvelope<T>>
+) => Promise<Response<T>>
 
 /** 取句子函数；缺键回退键名，不返回空白。 */
 export type Translator = (key: string, values?: Record<string, string | number>) => string

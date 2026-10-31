@@ -6,7 +6,7 @@
  * 说明撞上了网关错误页或代理改写，此刻报错比把 `undefined` 透到页面上好查。
  */
 
-export type ApiEnvelope<T = unknown> = {
+export type Response<T = unknown> = {
   success: boolean
   code: string
   msg: string
@@ -14,9 +14,14 @@ export type ApiEnvelope<T = unknown> = {
   traceId: string
 }
 
-/** 解析并校验一份信封；形状不符直接抛错。 */
-export async function parseEnvelope(response: Response): Promise<ApiEnvelope> {
-  const payload = (await response.json()) as ApiEnvelope
+/**
+ * 解析并校验一份信封；形状不符直接抛错。
+ *
+ * 形参显式写作 {@code globalThis.Response}：本模块导出的信封类型也叫 `Response`，
+ * 会在模块内遮蔽 Fetch API 的同名全局类型。
+ */
+export async function parseEnvelope(response: globalThis.Response): Promise<Response> {
+  const payload = (await response.json()) as Response
   if (!payload || typeof payload.success !== 'boolean' || typeof payload.code !== 'string') {
     throw new Error('响应不是 Servumi 信封')
   }

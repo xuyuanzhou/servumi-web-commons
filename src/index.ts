@@ -1,7 +1,7 @@
 /**
  * Servumi 前端 API 对接底座。对外只有这一张清单，消费方一律从包根导入。
  */
-export { parseEnvelope, type ApiEnvelope } from './envelope'
+export { parseEnvelope, type Response } from './envelope'
 export { ApiError } from './error'
 export { createModuleApi, type ModuleApi, type ModuleApiRequestOptions } from './api-factory'
 export {
