@@ -49,6 +49,8 @@ export type ManageSearchProps = {
   disabled?: boolean
   /** 无障碍名；无可见标签时必填。 */
   label: string
+  /** 输入上限；搜索词直接进查询串，调用方按后端口径给个上限。 */
+  maxLength?: number
   className?: string
 }
 
@@ -64,6 +66,7 @@ export function ManageSearch({
   icon,
   disabled,
   label,
+  maxLength,
   className,
 }: ManageSearchProps) {
   return (
@@ -79,6 +82,7 @@ export function ManageSearch({
         value={value}
         placeholder={placeholder}
         disabled={disabled}
+        maxLength={maxLength}
         aria-label={label}
         onChange={(event) => onChange(event.target.value)}
         onKeyDown={(event) => {
