@@ -48,6 +48,8 @@ export type PagesOptions = {
   menu: readonly MenuItem[]
   /** 左菜单的无障碍名称与可见标题的**键**；模块内相对键，文案在 `locale/*.json` 里。 */
   navLabel?: string
+  /** 某些端入口是纯舞台页，由壳或页面自己承载导航；这时不渲染 commons 的模块左栏。 */
+  hideNavigation?: boolean
 }
 
 export type ModuleLayoutProps = {
@@ -56,6 +58,7 @@ export type ModuleLayoutProps = {
   /** 本端的菜单树：菜单自述摊平后的结果。 */
   menu: readonly MenuNode[]
   navLabel?: string
+  hideNavigation?: boolean
 } & PortalPageProps
 
 /**
@@ -151,12 +154,13 @@ function toMenuItems(entries: readonly MenuNode[], formatMessage: Translator): M
 type ModuleNavProps = {
   menu: readonly MenuNode[]
   navLabel?: string
+  hideNavigation?: boolean
   /** 当前该高亮的菜单项路径；由路由匹配得出，空串即模块根那一层。 */
   active?: string
 } & PortalPageProps
 
 /** 左侧导航 + 右侧内容；内容由 `<Outlet/>` 接住本模块的嵌套路由。 */
-function ModuleNav({ menu, navLabel, active, ...page }: ModuleNavProps) {
+function ModuleNav({ menu, navLabel, hideNavigation = false, active, ...page }: ModuleNavProps) {
   const navigate = useNavigate()
   const { token } = theme.useToken()
   // 展开态受控：默认全展开，并在选中项变化时把它途经的分组补进来——否则直达子页时选中项
@@ -173,7 +177,7 @@ function ModuleNav({ menu, navLabel, active, ...page }: ModuleNavProps) {
   const content = <Outlet />
 
   // 只有一页时不必假装有二级导航，菜单与那一列都省掉，页面直接铺满。
-  if (!hasNavigation(menu)) {
+  if (hideNavigation || !hasNavigation(menu)) {
     return content
   }
 
@@ -239,7 +243,7 @@ function ModuleNav({ menu, navLabel, active, ...page }: ModuleNavProps) {
  * 装配本模块的嵌套路由：一层无路径的布局路由承载左菜单，子路由就是路由树翻出来的页面。
  * 高亮的依据直接取自路由匹配结果（`handle` 里的菜单路径），不再自造一套路径比对。
  */
-function ModuleLayout({ routes, menu, navLabel, ...page }: ModuleLayoutProps) {
+function ModuleLayout({ routes, menu, navLabel, hideNavigation = false, ...page }: ModuleLayoutProps) {
   const { pathname } = useLocation()
   const objects = toRoutes(routes, menu, page)
   const active = activeMenuPath(matchRoutes(objects, { pathname }, page.basePath))
@@ -248,7 +252,10 @@ function ModuleLayout({ routes, menu, navLabel, ...page }: ModuleLayoutProps) {
   // 页面是本组件的子节点，放 effect 里会晚一拍。
   registerLocale(page.formatMessage, page.locale)
   return useRoutes([
-    { element: <ModuleNav menu={menu} navLabel={navLabel} active={active} {...page} />, children: objects },
+    {
+      element: <ModuleNav menu={menu} navLabel={navLabel} hideNavigation={hideNavigation} active={active} {...page} />,
+      children: objects,
+    },
   ])
 }
 
@@ -263,7 +270,15 @@ export function definePages(groups: PageGroups, options: PagesOptions): ModulePa
   const menu = buildMenuTree(options.menu)
 
   function Pages(props: PortalPageProps): ReactNode {
-    return <ModuleLayout routes={routes} menu={menu} navLabel={options.navLabel} {...props} />
+    return (
+      <ModuleLayout
+        routes={routes}
+        menu={menu}
+        navLabel={options.navLabel}
+        hideNavigation={options.hideNavigation}
+        {...props}
+      />
+    )
   }
   return Pages
 }
