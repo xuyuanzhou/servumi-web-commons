@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { definePortalModule, type LocaleModules, type PortalPage } from './contract'
+import { definePortalModule, type LocaleModules, type PortalPage, type PortalSlotRenderer } from './contract'
 import type { NestedMessages } from './locale'
 
 const page: PortalPage = () => null
 
 /** 造一份端目录扫描结果；键照 `import.meta.glob` 给出的样子写。 */
-function scan(entries: Record<string, PortalPage>): Record<string, { default: PortalPage }> {
+function scan(entries: Record<string, PortalSlotRenderer>): Record<string, { default: PortalSlotRenderer }> {
   return Object.fromEntries(Object.entries(entries).map(([file, component]) => [file, { default: component }]))
 }
 
@@ -68,6 +68,13 @@ describe('definePortalModule', () => {
 
     expect(module.publicDesktop).toBeUndefined()
     expect(module.publicMobile).toBeUndefined()
+  })
+
+  it('运行时描述符：原样收下，不被当成 React 组件改写', () => {
+    const renderer: PortalSlotRenderer = { framework: 'vue', mount: () => undefined }
+    const module = definePortalModule(scan({ './desktop/index.ts': renderer }))
+
+    expect(module.desktop).toBe(renderer)
   })
 
   it('语言目录扫描式：按文件名取地区码，加一个语言不必改模块根', () => {

@@ -40,6 +40,30 @@ export type PortalPageProps = {
 export type PortalPage = (props: PortalPageProps) => unknown
 
 /**
+ * 非 React 运行时的挂载函数：壳把宿主节点与同一份 `PortalPageProps` 交进来，
+ * 返回值是卸载函数（没有返回值表示无需卸载动作）。
+ */
+export type RuntimeMount = (el: HTMLElement, props: PortalPageProps) => void | (() => void)
+
+/**
+ * 运行时渲染描述符：由壳在指定 DOM 节点内挂载，而不是当成 React 组件直接渲染。
+ * 存在的唯一理由是壳内需要承载第二种运行时（见 ADR-0020）；壳只有唯一一个 React root。
+ */
+export type RuntimeRenderer = {
+  /** 运行时名（'vue' | 'svelte' | …）。仅用于诊断与日志，壳不据此分派，只看有没有 `mount`。 */
+  framework: string
+  mount: RuntimeMount
+}
+
+/**
+ * 槽位渲染器：React 页面（缺省形态，行为与从前一致），或运行时描述符。
+ *
+ * 判别只看 `typeof renderer === 'function'`——函数一律走 React 路径，
+ * 因此这条放宽对既有 React Remote 是纯加法，不改变它们的装配行为。
+ */
+export type PortalSlotRenderer = PortalPage | RuntimeRenderer
+
+/**
  * 门户槽位名。这一份必须与 `@servumi/module-contract` 的 `PORTAL_RENDER_SLOTS` 取值一致：
  * 一边是 Remote 暴露什么（本包），一边是注册中心下发什么（契约包），两侧对不上就会「菜单里有、点进去空」。
  * 不共用同一个常量，是因为本包要守零运行时依赖，而契约包是各模块的构建期依赖。
@@ -49,7 +73,7 @@ export const PORTAL_SLOTS = ['desktop', 'manage', 'mobile', 'publicDesktop', 'pu
 export type PortalSlot = (typeof PORTAL_SLOTS)[number]
 
 /** Remote 暴露给壳的模块对象：可渲染的槽位 + 可选语言目录。 */
-export type PortalRemoteModule = Partial<Record<PortalSlot, PortalPage>> & {
+export type PortalRemoteModule = Partial<Record<PortalSlot, PortalSlotRenderer>> & {
   /**
    * 返回本模块在该语言下的界面目录（**模块内相对键** → 文案）。壳补上模块 id 前缀后交给 `formatMessage`；
    * 返回 null 表示该语言无目录，壳回退源语言。
@@ -65,7 +89,7 @@ export type PortalRemoteModule = Partial<Record<PortalSlot, PortalPage>> & {
 }
 
 /** 端入口（`src/<端>/index.ts`）的形状，供模块根对端目录做 `import.meta.glob` 扫描。 */
-export type SlotModule = { default: PortalPage }
+export type SlotModule = { default: PortalSlotRenderer }
 
 /** 端目录扫描结果：文件路径 → 端入口。键由构建器给出，形如 `./manage/index.ts`。 */
 export type SlotModules = Record<string, SlotModule>
@@ -130,8 +154,8 @@ function isSlotScan(source: PortalModuleDefinition | SlotModules): source is Slo
  * 从扫描结果里挑出端页面：只认第一段就是槽位名的入口。
  * 这一层过滤是必需的——`src/` 下的 `api`、`locale` 等目录同样有自己的 `index.ts`，不能混进槽位表。
  */
-function pickSlots(scanned: SlotModules): Partial<Record<PortalSlot, PortalPage>> {
-  const picked: Partial<Record<PortalSlot, PortalPage>> = {}
+function pickSlots(scanned: SlotModules): Partial<Record<PortalSlot, PortalSlotRenderer>> {
+  const picked: Partial<Record<PortalSlot, PortalSlotRenderer>> = {}
   for (const [file, entry] of Object.entries(scanned)) {
     const slot = slotOf(file)
     if (slot !== undefined) {
@@ -178,7 +202,9 @@ const PUBLIC_SLOT_SOURCES: ReadonlyArray<readonly [PortalSlot, PortalSlot]> = [
  * 让每个公开模块手写两行别名，只会把「模块根不出现端名册」这条规矩重新打开一个口。
  * 需要独立公开视图的模块显式传 `publicDesktop` / `publicMobile` 即可覆盖，表达力没有损失。
  */
-function withPublicAliases(slots: Partial<Record<PortalSlot, PortalPage>>): Partial<Record<PortalSlot, PortalPage>> {
+function withPublicAliases(
+  slots: Partial<Record<PortalSlot, PortalSlotRenderer>>,
+): Partial<Record<PortalSlot, PortalSlotRenderer>> {
   const filled = { ...slots }
   for (const [publicSlot, privateSlot] of PUBLIC_SLOT_SOURCES) {
     if (filled[publicSlot] === undefined && filled[privateSlot] !== undefined) {
