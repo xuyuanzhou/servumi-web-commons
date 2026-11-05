@@ -16,6 +16,7 @@ import {
   Suspense,
   lazy,
   useEffect,
+  useRef,
   useState,
   type ComponentType,
   type CSSProperties,
@@ -25,6 +26,7 @@ import {
 import { Navigate, Outlet, matchRoutes, useLocation, useNavigate, useRoutes, type RouteObject } from 'react-router-dom'
 import type { PortalPageProps, Translator } from './contract'
 import { registerLocale } from './locale-runtime'
+import { buildSegmentSections, resolveModuleNavLayout, type ModuleNavLayout } from './module-nav-layout'
 import {
   MENU_KEY_PREFIX,
   ancestorKeys,
@@ -163,9 +165,35 @@ type ModuleNavProps = {
 function ModuleNav({ menu, navLabel, hideNavigation = false, active, ...page }: ModuleNavProps) {
   const navigate = useNavigate()
   const { token } = theme.useToken()
+  const hostRef = useRef<HTMLDivElement | null>(null)
   // 展开态受控：默认全展开，并在选中项变化时把它途经的分组补进来——否则直达子页时选中项
   // 藏在收起的组里看不到。只在选中项变化时补，用户随手折叠当前组不会被打断。
   const [openKeys, setOpenKeys] = useState(() => expandableKeys(menu))
+  /**
+   * 左栏是固定 216px，容器窄了就把正文挤到横滚，故折成顶部一排、把整宽让还给正文。
+   *
+   * 折与不折按容器实测宽度定，不猜断点：同一档窗口里，容器宽度还会被壳左栏的收展、
+   * 以及是否套白底面板改变，写死断点两处必然走样。测的是最外层容器——它与父级同宽，
+   * 不由里头的导航撑开，故实测值与摆放方式是稳定的，不会来回抖。
+   */
+  const [layout, setLayout] = useState<ModuleNavLayout>('rail')
+  useEffect(() => {
+    const host = hostRef.current
+    if (host === null) {
+      return
+    }
+    const sync = (): void => {
+      setLayout(resolveModuleNavLayout({ availableWidth: host.clientWidth }))
+    }
+    sync()
+    if (typeof ResizeObserver === 'undefined') {
+      return
+    }
+    const observer = new ResizeObserver(sync)
+    observer.observe(host)
+    return () => observer.disconnect()
+  }, [])
+
   useEffect(() => {
     if (active === undefined) {
       return
@@ -184,8 +212,51 @@ function ModuleNav({ menu, navLabel, hideNavigation = false, active, ...page }: 
   const go = (path: string): void => {
     navigate(path === '' ? page.basePath : joinPath(page.basePath, path))
   }
-  const items = toMenuItems(menu, page.formatMessage)
   const label = navLabel === undefined ? undefined : page.formatMessage(navLabel)
+
+  /*
+   * 窄容器形态：顶部一排段控。分组拍平——组名是不可点的前置标签，组内落点紧随其后，
+   * 故「分组 → 落点」的阅读顺序还在，点击仍只有一跳。图标在这一档省掉，把宽度让给文字。
+   *
+   * 这一排仍挂 `.servumi-module-rail` 基类，于是装配方按基类做的收拢（如学习门户里收掉
+   * 模块二级导航）对它同样生效——否则窄屏会凭空多出一条宽屏时不存在的导航。
+   */
+  if (layout === 'segment') {
+    const sections = buildSegmentSections(menu)
+    return (
+      <div
+        ref={hostRef}
+        style={{ display: 'flex', flexDirection: 'column', gap: token.paddingSM, minWidth: 0 }}
+      >
+        <nav aria-label={label} className="servumi-module-rail servumi-module-rail--segment">
+          {sections.map((section) => (
+            <div className="servumi-module-seg-group" key={section.key}>
+              {section.label === undefined ? null : (
+                <span className="servumi-module-seg-label">{page.formatMessage(section.label)}</span>
+              )}
+              {section.items.map((item) => {
+                const current = item.path === active
+                return (
+                  <button
+                    key={item.path}
+                    type="button"
+                    className={current ? 'servumi-module-seg-item is-active' : 'servumi-module-seg-item'}
+                    aria-current={current ? 'page' : undefined}
+                    onClick={() => go(item.path)}
+                  >
+                    {page.formatMessage(item.label)}
+                  </button>
+                )
+              })}
+            </div>
+          ))}
+        </nav>
+        <div style={{ flex: '1 1 auto', minWidth: 0 }}>{content}</div>
+      </div>
+    )
+  }
+
+  const items = toMenuItems(menu, page.formatMessage)
 
   /*
    * 左侧导航栏：标题 + 竖直分隔线。用一条细线把导航与正文分开，比整块底色更贴合壳的白底面板。
@@ -213,7 +284,7 @@ function ModuleNav({ menu, navLabel, hideNavigation = false, active, ...page }: 
   }
 
   return (
-    <div style={{ display: 'flex', alignItems: 'stretch', gap: token.paddingLG }}>
+    <div ref={hostRef} style={{ display: 'flex', alignItems: 'stretch', gap: token.paddingLG, minWidth: 0 }}>
       <nav aria-label={label} className="servumi-module-rail" style={railStyle}>
         {label === undefined ? null : (
           <div className="servumi-module-rail-title" style={titleStyle}>
